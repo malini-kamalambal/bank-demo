@@ -1,0 +1,20 @@
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: report-worker
+
+containers:
+  reportworker:
+    image: registry.humanitec.io/public/bank-demo-report-worker:latest
+    resources:
+      requests:
+        memory: "150Mi"
+        cpu: "50m"
+      limits:
+        memory: "200Mi"
+        cpu: "150m"
+    variables:
+      AWS_REGION: ${resources.s3.region}
+      AWS_ACCESS_KEY_ID: ${resources.s3.aws_access_key_id}
+      AWS_SECRET_ACCESS_KEY: ${resources.s3.aws_secret_access_key}
+      AWS_BUCKET_NAME: ${resources.s3.bucket}

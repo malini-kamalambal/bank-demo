@@ -1,0 +1,39 @@
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: moneyapi
+
+service:
+  ports:
+    moneyapi:
+      port: 3000
+      targetPort: 3000
+
+containers:
+  moneyapi:
+    image: registry.humanitec.io/public/bank-demo-money-api:latest
+    resources:
+      requests:
+        memory: "150Mi"
+        cpu: "150m"
+      limits:
+        memory: "200Mi"
+        cpu: "250m"
+    variables:
+      PORT: "3000"
+      DB_DATABASE: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      DB_TYPE: mysql
+
+resources:
+  db:
+    type: mysql
+    properties:
+      name:
+      username:
+      password:
+      host:
+      port:

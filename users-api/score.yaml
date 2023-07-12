@@ -1,0 +1,23 @@
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: usersapi
+
+service:
+  ports:
+    usersapi:
+      port: 3000
+      targetPort: 3000
+
+containers:
+  usersapi:
+    image: registry.humanitec.io/public/bank-demo-users-api:latest
+    resources:
+      requests:
+        memory: "150Mi"
+        cpu: "50m"
+      limits:
+        memory: "200Mi"
+        cpu: "150m"
+    variables:
+      PORT: "3000"

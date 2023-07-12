@@ -1,0 +1,82 @@
+name: Build Service
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+      image-name:
+        required: true
+        type: string
+      HUMANITEC_ORG:
+        required: true
+        type: string
+    secrets:
+      HUMANITEC_TOKEN:
+        required: true
+    outputs:
+      IMAGE_NAME: 
+        description: "The name of the image that was built"
+        value: ${{ jobs.build-service.outputs.IMAGE_NAME }}
+      IMAGE_TAG: 
+        description: "The tag of the image that was built"
+        value: ${{ jobs.build-service.outputs.IMAGE_TAG }}
+
+jobs:
+
+  build-service:
+
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ${{ inputs.image-name }}
+
+    outputs:
+      IMAGE_NAME: ${{ env.IMAGE_NAME }}
+      IMAGE_TAG: ${{ steps.settag.outputs.IMAGE_TAG }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Login to docker registry
+      run: echo '${{ secrets.PUBLIC_REGISTRY_PASSWORD }}' | docker login -u '${{ secrets.PUBLIC_REGISTRY_USERNAME }}' --password-stdin https://registry.humanitec.io
+
+    - name: Install deps
+      run: yarn
+      working-directory: ./${{ inputs.service-name }}
+
+    - name: Build Code
+      run: yarn run build
+      working-directory: ./${{ inputs.service-name }}
+    
+    - name: Set Tag
+      run: |
+        IMAGE_TAG=$(date "+%Y-%m-%d_%H-%M-%S")
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+      id: settag
+
+    - name: Build the Docker image
+      run: docker build . --tag ${IMAGE_NAME}:${IMAGE_TAG}
+      working-directory: ./${{ inputs.service-name }}
+
+    - name: Push image
+      run: docker push ${IMAGE_NAME}:${IMAGE_TAG}
+    
+    - name: Tag Latest
+      run: docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest && docker push ${IMAGE_NAME}:latest
+
+    - name: Update Humanitec
+      run: |
+        curl \
+            --request POST "https://api.humanitec.io/orgs/${{ inputs.HUMANITEC_ORG }}/artefact-versions" \
+            --header "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --fail-with-body \
+            --data-raw '{ 
+                "name": "'${IMAGE_NAME}'",
+                "version": "'${IMAGE_TAG}'",
+                "type": "container",
+                "commit": "'${{ vars.GITHUB_SHA }}'",
+                "ref": "'${{ vars.GITHUB_REF }}'"
+            }'
