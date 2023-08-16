@@ -30,9 +30,5 @@ resources:
     type: dns
   moneyapi:
     type: service
-    properties:
-      name:
   usersapi:
     type: service
-    properties:
-      name:

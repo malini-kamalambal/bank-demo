@@ -27,13 +27,10 @@ containers:
       DB_HOST: ${resources.db.host}
       DB_PORT: ${resources.db.port}
       DB_TYPE: mysql
+      STORAGE_BUCKET: ${resources.storage.bucket}
 
 resources:
   db:
     type: mysql
-    properties:
-      name:
-      username:
-      password:
-      host:
-      port:
+  storage:
+    type: s3
