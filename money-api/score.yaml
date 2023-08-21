@@ -27,10 +27,7 @@ containers:
       DB_HOST: ${resources.db.host}
       DB_PORT: ${resources.db.port}
       DB_TYPE: mysql
-      STORAGE_BUCKET: ${resources.storage.bucket}
 
 resources:
   db:
     type: mysql
-  storage:
-    type: s3
