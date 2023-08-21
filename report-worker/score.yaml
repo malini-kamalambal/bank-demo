@@ -18,3 +18,7 @@ containers:
       AWS_ACCESS_KEY_ID: ${resources.s3.aws_access_key_id}
       AWS_SECRET_ACCESS_KEY: ${resources.s3.aws_secret_access_key}
       AWS_BUCKET_NAME: ${resources.s3.bucket}
+
+resources:
+  s3:
+    type: s3
