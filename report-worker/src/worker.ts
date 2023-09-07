@@ -9,7 +9,7 @@ import { setTimeout } from "timers/promises";
 })
 
 const isDryRun = () => {
-  return process.env.DRY_RUN !== 'false'
+  return process.env.DRY_RUN.toLowerCase() !== 'false'
 }
 
 const bucketName = process.env.AWS_BUCKET_NAME
