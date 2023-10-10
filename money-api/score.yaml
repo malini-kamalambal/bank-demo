@@ -32,5 +32,3 @@ containers:
 resources:
   db:
     type: mysql
-  storage:
-    type: s3

@@ -1,10 +1,16 @@
 name: Main Pipeline
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
+env:
+  SCORE_HUMANITEC_VERSION: 'latest'
 
 jobs:
 
@@ -47,34 +53,22 @@ jobs:
               - '**/score.yaml'
               - '**/humanitec.score.yaml'
       
-      # Override the image name and tag for services which the version built in previous steps
-      - name: Create overrides file
+      - name: install score-humanitec
         if: steps.changes.outputs.scorefiles == 'true'
-        run: |
-          wget -q https://github.com/mikefarah/yq/releases/download/v4.30.8/yq_linux_amd64 -O yq
-          chmod +x yq
-          mv yq /usr/local/bin
-
-          yq e -n ".containers.frontend.image = \"${{needs.build-frontend.outputs.IMAGE_NAME}}:${{needs.build-frontend.outputs.IMAGE_TAG}}\"" > frontend.overrides.score.yaml
-          yq e -n ".containers.moneyapi.image = \"${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}\"" > moneyapi.overrides.score.yaml
-          yq e -n ".containers.usersapi.image = \"${{needs.build-usersapi.outputs.IMAGE_NAME}}:${{needs.build-usersapi.outputs.IMAGE_TAG}}\"" > usersapi.overrides.score.yaml
-              
-      - name: Install score-humanitec
-        if: steps.changes.outputs.scorefiles == 'true'
-        run: |
-          wget https://github.com/score-spec/score-humanitec/releases/download/0.5.0/score-humanitec_0.5.0_linux_amd64.tar.gz
-          tar -xvf score-humanitec_0.5.0_linux_amd64.tar.gz
-          chmod +x score-humanitec
-          mv score-humanitec /usr/local/bin
+        uses: score-spec/setup-score@v2
+        with:
+          file: score-humanitec
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ env.SCORE_HUMANITEC_VERSION }}
 
       - name: Run Score - Money API
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f money-api/score.yaml --overrides moneyapi.overrides.score.yaml
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f money-api/score.yaml --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
       
       - name: Run Score - Users API
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f users-api/score.yaml --overrides usersapi.overrides.score.yaml
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f users-api/score.yaml --property containers.usersapi.image=${{needs.build-usersapi.outputs.IMAGE_NAME}}:${{needs.build-usersapi.outputs.IMAGE_TAG}}
 
       - name: Run Score - Frontend
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f frontend/score.yaml --extensions frontend/humanitec.score.yaml --overrides frontend.overrides.score.yaml
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f frontend/score.yaml --extensions frontend/humanitec.score.yaml --property containers.frontend.image=${{needs.build-frontend.outputs.IMAGE_NAME}}:${{needs.build-frontend.outputs.IMAGE_TAG}}
