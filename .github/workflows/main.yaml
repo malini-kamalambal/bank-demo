@@ -19,7 +19,7 @@ jobs:
     secrets: inherit
     with:
       service-name: frontend
-      image-name: registry.humanitec.io/public/bank-demo-frontend
+      image-name: registry.humanitec.io/humanitec/bank-demo-frontend
       HUMANITEC_ORG: ${{ vars.HUMANITEC_ORG }}
 
   build-moneyapi:
@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
     with:
       service-name: money-api
-      image-name: registry.humanitec.io/public/bank-demo-money-api
+      image-name: registry.humanitec.io/humanitec/bank-demo-money-api
       HUMANITEC_ORG: ${{ vars.HUMANITEC_ORG }}
 
   build-usersapi:
@@ -35,7 +35,7 @@ jobs:
     secrets: inherit
     with:
       service-name: users-api
-      image-name: registry.humanitec.io/public/bank-demo-users-api
+      image-name: registry.humanitec.io/humanitec/bank-demo-users-api
       HUMANITEC_ORG: ${{ vars.HUMANITEC_ORG }}
 
   run-score:
