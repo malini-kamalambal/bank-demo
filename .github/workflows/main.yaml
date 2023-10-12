@@ -87,7 +87,7 @@ jobs:
               - '**/humanitec.score.yaml'
       
       - name: install score-humanitec
-        if: steps.changes.outputs.scorefiles == 'true'
+        # if: steps.changes.outputs.scorefiles == 'true'
         uses: score-spec/setup-score@v2
         with:
           file: score-humanitec
@@ -95,7 +95,7 @@ jobs:
           version: ${{ env.SCORE_HUMANITEC_VERSION }}
 
       - name: Run Score - Money API
-        if: steps.changes.outputs.scorefiles == 'true'
+        # if: steps.changes.outputs.scorefiles == 'true'
         run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env ${{ env.ENVIRONMENT_ID }} -f money-api/score.yaml
           | tee score_output.json
         # --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
