@@ -11,6 +11,10 @@ on:
 
 env:
   SCORE_HUMANITEC_VERSION: 'latest'
+  BASE_ENVIRONMENT: 'development'
+  ENVIRONMENT_TYPE: 'development'
+  ENVIRONMENT_ID: pr-${{ github.event.number }}
+  ENVIRONMENT_NAME: PR-${{ github.event.number }}
 
 jobs:
 
@@ -38,9 +42,38 @@ jobs:
       image-name: registry.humanitec.io/${{ vars.HUMANITEC_ORG }}/bank-demo-users-api
       HUMANITEC_ORG: ${{ vars.HUMANITEC_ORG }}
 
-  run-score:
+  create-pr-env:
     runs-on: ubuntu-latest
     needs: [build-frontend, build-moneyapi, build-usersapi]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Humanitec Env
+        run: |
+            # Get deployment ID of the main development environment
+            curl \
+            -H "Content-Type: application/json" \
+            -H 'Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}' \
+            https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs/${{ env.BASE_ENVIRONMENT }} \
+            | jq -r ".last_deploy.id" > deploy_id.txt
+
+            # Create a new environment for the PR
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H 'Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}' \
+            https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs \
+            --data-binary @- << EOF
+            {
+              "from_deploy_id": "$(cat deploy_id.txt)",
+              "id": "${{ env.ENVIRONMENT_ID }}",
+              "name": "${{ env.ENVIRONMENT_NAME }}",
+              "type": "${{ env.ENVIRONMENT_TYPE }}"
+            }
+            EOF
+
+  run-score:
+    runs-on: ubuntu-latest
+    # needs: [build-frontend, build-moneyapi, build-usersapi]
+    needs: [create-pr-env]
 
     steps:
       - uses: actions/checkout@v3
@@ -64,11 +97,68 @@ jobs:
       - name: Run Score - Money API
         if: steps.changes.outputs.scorefiles == 'true'
         run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f money-api/score.yaml --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
-      
-      - name: Run Score - Users API
-        if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f users-api/score.yaml --property containers.usersapi.image=${{needs.build-usersapi.outputs.IMAGE_NAME}}:${{needs.build-usersapi.outputs.IMAGE_TAG}}
+      - name: Wait for deployment
+        run: |
+          sleep 1
 
-      - name: Run Score - Frontend
-        if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f frontend/score.yaml --extensions frontend/humanitec.score.yaml --property containers.frontend.image=${{needs.build-frontend.outputs.IMAGE_NAME}}:${{needs.build-frontend.outputs.IMAGE_TAG}}
+          IS_DONE=false
+
+          while [ "$IS_DONE" = false ]; do
+            CURRENT_STATUS=$(curl \
+              -H "Content-Type: application/json" \
+              -H 'Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}' \
+              https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs/${{ env.ENVIRONMENT_ID }} \
+              | jq -r ".last_deploy.status")
+            
+            INPROGRESS="in progress"
+
+            if [ "$CURRENT_STATUS" = "$INPROGRESS" ]; then
+              echo "Deployment still in progress..."
+              sleep 1
+            else
+              echo "Deployment complete!"
+              IS_DONE=true
+            fi
+          done
+      - name: Build Comment Message
+        run: |
+          ENV_URL=$(jq -r ".metadata.url" score_output.json)
+          DEPLOYMENT_ID=$(jq -r ".id" score_output.json)
+          DOMAINS=$(curl -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs/${{ env.ENVIRONMENT_ID }}/resources | jq -r '. | map(. | select(.type == "dns")) | map((.res_id | split(".") | .[1]) + ": [" + .resource.host + "](https://" + .resource.host + ")") | join("\n")')
+          
+          echo "## Deployment Complete for ${{ env.ENVIRONMENT_NAME }}! :tada:" >> pr_message.txt
+          echo "" >> pr_message.txt
+          
+          echo "### [View in Humanitec]($ENV_URL)" >> pr_message.txt
+          echo "Deployment ID: $DEPLOYMENT_ID" >> pr_message.txt
+
+          echo "" >> pr_message.txt
+          echo "### Domains:" >> pr_message.txt
+          echo "" >> pr_message.txt
+          echo "$DOMAINS" >> pr_message.txt
+          echo "" >> pr_message.txt
+
+          echo "<details><summary>Score Output</summary>" >> pr_message.txt
+          echo "" >> pr_message.txt
+          echo "### Score Output:" >> pr_message.txt
+          echo '```json' >> pr_message.txt
+          echo "" >> pr_message.txt
+          cat score_output.json >> pr_message.txt
+          echo "" >> pr_message.txt
+          echo '```' >> pr_message.txt
+          echo "" >> pr_message.txt
+          echo "</details>" >> pr_message.txt
+
+          cat pr_message.txt
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: pr_message.txt
+
+      # - name: Run Score - Users API
+      #   if: steps.changes.outputs.scorefiles == 'true'
+      #   run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f users-api/score.yaml --property containers.usersapi.image=${{needs.build-usersapi.outputs.IMAGE_NAME}}:${{needs.build-usersapi.outputs.IMAGE_TAG}}
+
+      # - name: Run Score - Frontend
+      #   if: steps.changes.outputs.scorefiles == 'true'
+      #   run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f frontend/score.yaml --extensions frontend/humanitec.score.yaml --property containers.frontend.image=${{needs.build-frontend.outputs.IMAGE_NAME}}:${{needs.build-frontend.outputs.IMAGE_TAG}}
