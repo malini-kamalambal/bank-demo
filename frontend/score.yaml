@@ -11,7 +11,7 @@ service:
 
 containers:
   frontend:
-    image: registry.humanitec.io/public/bank-demo-frontend:latest
+    image: registry.humanitec.io/mk-bank-demo/bank-demo-frontend:latest
     resources:
       requests:
         memory: "150Mi"
