@@ -96,7 +96,7 @@ jobs:
 
       - name: Run Score - Money API
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f money-api/score.yaml --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env ${{ env.ENVIRONMENT_ID }} -f money-api/score.yaml --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
       - name: Wait for deployment
         run: |
           sleep 1
