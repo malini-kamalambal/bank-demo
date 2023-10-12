@@ -22,14 +22,14 @@ jobs:
             curl \
             -H "Content-Type: application/json" \
             -H 'Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}' \
-            https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.APP_NAME }}/envs/${{ env.BASE_ENVIRONMENT }} \
+            https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs/${{ env.BASE_ENVIRONMENT }} \
             | jq -r ".last_deploy.id" > deploy_id.txt
 
             # Create a new environment for the PR
             curl -X POST \
             -H "Content-Type: application/json" \
             -H 'Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}' \
-            https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.APP_NAME }}/envs \
+            https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs \
             --data-binary @- << EOF
             {
               "from_deploy_id": "$(cat deploy_id.txt)",
@@ -51,7 +51,7 @@ jobs:
               --deploy \
               --token ${{ secrets.HUMANITEC_TOKEN }} \
               --org ${{ vars.HUMANITEC_ORG }} \
-              --app ${{ vars.APP_NAME }} \
+              --app ${{ vars.HUMANITEC_APP }} \
               --env ${{ env.ENVIRONMENT_ID }} \
               | tee score_output.json
       - name: Wait for deployment
@@ -64,7 +64,7 @@ jobs:
             CURRENT_STATUS=$(curl \
               -H "Content-Type: application/json" \
               -H 'Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}' \
-              https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.APP_NAME }}/envs/${{ env.ENVIRONMENT_ID }} \
+              https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs/${{ env.ENVIRONMENT_ID }} \
               | jq -r ".last_deploy.status")
             
             INPROGRESS="in progress"
@@ -81,7 +81,7 @@ jobs:
         run: |
           ENV_URL=$(jq -r ".metadata.url" score_output.json)
           DEPLOYMENT_ID=$(jq -r ".id" score_output.json)
-          DOMAINS=$(curl -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.APP_NAME }}/envs/${{ env.ENVIRONMENT_ID }}/resources | jq -r '. | map(. | select(.type == "dns")) | map((.res_id | split(".") | .[1]) + ": [" + .resource.host + "](https://" + .resource.host + ")") | join("\n")')
+          DOMAINS=$(curl -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" https://api.humanitec.io/orgs/${{ vars.HUMANITEC_ORG }}/apps/${{ vars.HUMANITEC_APP }}/envs/${{ env.ENVIRONMENT_ID }}/resources | jq -r '. | map(. | select(.type == "dns")) | map((.res_id | split(".") | .[1]) + ": [" + .resource.host + "](https://" + .resource.host + ")") | join("\n")')
           
           echo "## Deployment Complete for ${{ env.ENVIRONMENT_NAME }}! :tada:" >> pr_message.txt
           echo "" >> pr_message.txt
