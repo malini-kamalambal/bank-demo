@@ -11,7 +11,7 @@ service:
 
 containers:
   usersapi:
-    image: registry.humanitec.io/public/bank-demo-users-api:latest
+    image: registry.humanitec.io/mk-bank-demo/bank-demo-users-api:latest
     resources:
       requests:
         memory: "150Mi"
