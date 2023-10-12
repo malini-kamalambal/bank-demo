@@ -63,12 +63,12 @@ jobs:
 
       - name: Run Score - Money API
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f money-api/score.yaml --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f money-api/score.yaml --property containers.moneyapi.image=${{needs.build-moneyapi.outputs.IMAGE_NAME}}:${{needs.build-moneyapi.outputs.IMAGE_TAG}}
       
       - name: Run Score - Users API
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f users-api/score.yaml --property containers.usersapi.image=${{needs.build-usersapi.outputs.IMAGE_NAME}}:${{needs.build-usersapi.outputs.IMAGE_TAG}}
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f users-api/score.yaml --property containers.usersapi.image=${{needs.build-usersapi.outputs.IMAGE_NAME}}:${{needs.build-usersapi.outputs.IMAGE_TAG}}
 
       - name: Run Score - Frontend
         if: steps.changes.outputs.scorefiles == 'true'
-        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app bank-demo --env development -f frontend/score.yaml --extensions frontend/humanitec.score.yaml --property containers.frontend.image=${{needs.build-frontend.outputs.IMAGE_NAME}}:${{needs.build-frontend.outputs.IMAGE_TAG}}
+        run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env development -f frontend/score.yaml --extensions frontend/humanitec.score.yaml --property containers.frontend.image=${{needs.build-frontend.outputs.IMAGE_NAME}}:${{needs.build-frontend.outputs.IMAGE_TAG}}
