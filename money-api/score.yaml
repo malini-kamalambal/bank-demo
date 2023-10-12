@@ -11,7 +11,7 @@ service:
 
 containers:
   moneyapi:
-    image: registry.humanitec.io/public/bank-demo-money-api:latest
+    image: registry.humanitec.io/mk-bank-demo/bank-demo-money-api:latest
     resources:
       requests:
         memory: "150Mi"
@@ -27,7 +27,6 @@ containers:
       DB_HOST: ${resources.db.host}
       DB_PORT: ${resources.db.port}
       DB_TYPE: mysql
-      STORAGE_BUCKET: ${resources.storage.bucket}
 
 resources:
   db:
