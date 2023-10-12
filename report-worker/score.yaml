@@ -5,7 +5,7 @@ metadata:
 
 containers:
   reportworker:
-    image: registry.humanitec.io/public/bank-demo-report-worker:latest
+    image: registry.humanitec.io/mk-bank-demo/bank-demo-report-worker:latest
     resources:
       requests:
         memory: "150Mi"
