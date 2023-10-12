@@ -53,6 +53,7 @@ jobs:
               --org ${{ vars.HUMANITEC_ORG }} \
               --app ${{ vars.HUMANITEC_APP }} \
               --env ${{ env.ENVIRONMENT_ID }} \
+              --file money-api/score.yaml \
               | tee score_output.json
       - name: Wait for deployment
         run: |
