@@ -1,4 +1,4 @@
-# Humanitec Bank Demo:
+# Humanitec Bank Demo
 
 <img src="assets/logo-color.png" alt="Reel Fake Logo" height="400"/>
 
