@@ -94,33 +94,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ env.SCORE_HUMANITEC_VERSION }}
 
-      # - name: Run Score - Build Delta
-      #   COMBINED_DELTA=$(score-humanitec delta \
-      #           --app ${{ vars.HUMANITEC_APP }} \
-      #           --env ${{ env.ENVIRONMENT_ID }} \
-      #           --org ${{ vars.HUMANITEC_ORG }} \
-      #           --token ${{ secrets.HUMANITEC_TOKEN }} \
-      #           --retry \
-      #           -f money-api/score.yaml
-
-      #   COMBINED_DELTA=$(score-humanitec delta \
-      #           --app ${{ vars.HUMANITEC_APP }} \
-      #           --env ${{ env.ENVIRONMENT_ID }} \
-      #           --org ${{ vars.HUMANITEC_ORG }} \
-      #           --token ${{ secrets.HUMANITEC_TOKEN }} \
-      #           --delta ${COMBINED_DELTA} \
-      #           --retry \
-      #           -f users-api/score.yaml
-
-      #   COMBINED_DELTA=$(score-humanitec delta \
-      #           --app ${{ vars.HUMANITEC_APP }} \
-      #           --env ${{ env.ENVIRONMENT_ID }} \
-      #           --org ${{ vars.HUMANITEC_ORG }} \
-      #           --token ${{ secrets.HUMANITEC_TOKEN }} \
-      #           --delta ${COMBINED_DELTA} \
-      #           --retry \
-      #           -f frontend/score.yaml
-
       - name: Run Score - Money API
         # if: steps.changes.outputs.scorefiles == 'true'
         run: score-humanitec delta --retry --deploy --token ${{ secrets.HUMANITEC_TOKEN }} --org ${{ vars.HUMANITEC_ORG }} --app ${{ vars.HUMANITEC_APP }} --env ${{ env.ENVIRONMENT_ID }} -f money-api/score.yaml
