@@ -21,3 +21,6 @@ containers:
         cpu: "150m"
     variables:
       PORT: "3000"
+resources:
+  asset:
+    type: s3
